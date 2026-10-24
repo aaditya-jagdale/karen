@@ -28,7 +28,6 @@ If applicable, add screenshots to help explain your problem.
  - Browser: [e.g. Chrome, Brave]
  - Browser Version: [e.g. 119]
  - Extension Version: [e.g. 1.0.0]
- - Server Version: [e.g. 0.1.2]
  - Localhost Framework: [e.g. React, Vue, Next.js]
 
 **Additional context**
@@ -37,4 +36,4 @@ Add any other context about the problem here.
 **Logs**
 If applicable, please include:
 - Browser console logs
-- Server logs (run `pointa-server logs`)
+- Local activity storage status

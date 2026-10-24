@@ -1,4 +1,5 @@
-// Pointa Selector Generator
+(() => {
+// Karen Selector Generator
 // Generates robust CSS selectors for element identification
 
 class SelectorGenerator {
@@ -97,7 +98,7 @@ class SelectorGenerator {
     if (!element.className) return null;
     
     const classes = Array.from(element.classList)
-      .filter(cls => !cls.startsWith('pointa-'))
+      .filter(cls => !cls.startsWith('karen-'))
       .filter(cls => this.isStableClass(cls))
       .slice(0, 4); // Use more classes for better specificity
     
@@ -120,7 +121,7 @@ class SelectorGenerator {
     const parent = element.parentElement;
     if (parent && parent.tagName !== 'BODY') {
       const parentClasses = Array.from(parent.classList)
-        .filter(cls => !cls.startsWith('pointa-'))
+        .filter(cls => !cls.startsWith('karen-'))
         .filter(cls => this.isStableClass(cls))
         .slice(0, 2);
       
@@ -153,7 +154,7 @@ class SelectorGenerator {
       
       // 1. Check for stable classes
       const stableClasses = Array.from(current.classList)
-        .filter(cls => !cls.startsWith('pointa-'))
+        .filter(cls => !cls.startsWith('karen-'))
         .filter(cls => this.isStableClass(cls))
         .slice(0, 2);
       
@@ -167,43 +168,7 @@ class SelectorGenerator {
       else if (current.getAttribute('role')) {
         identifier = `${tag}[role="${current.getAttribute('role')}"]`;
       }
-      // 3. For elements with distinctive inline styles, use style attributes
-      else if (current.hasAttribute('style')) {
-        const style = current.getAttribute('style');
-        // Look for distinctive style patterns
-        if (style.includes('linear-gradient')) {
-          // Extract gradient colors for uniqueness
-          const gradientMatch = style.match(/linear-gradient\([^)]+\)/);
-          if (gradientMatch) {
-            const gradientValue = gradientMatch[0];
-            // Use a simplified gradient signature
-            const colorMatch = gradientValue.match(/#[0-9a-f]{6}/gi) || 
-                              gradientMatch[0].match(/rgb[a]?\([^)]+\)/gi);
-            if (colorMatch && colorMatch.length >= 2) {
-              // Use first and last color as identifier
-              const firstColor = colorMatch[0].replace(/[^a-z0-9]/gi, '');
-              const lastColor = colorMatch[colorMatch.length - 1].replace(/[^a-z0-9]/gi, '');
-              identifier = `${tag}[style*="linear-gradient"][style*="${firstColor}"][style*="${lastColor}"]`;
-            }
-          }
-        }
-        // If no gradient, still use nth-of-type for position
-        if (identifier === tag) {
-          const parent = current.parentElement;
-          if (parent) {
-            const siblings = Array.from(parent.children || []);
-            const sameTagSiblings = siblings.filter(sibling => 
-              sibling.tagName.toLowerCase() === tag
-            );
-            
-            if (sameTagSiblings.length > 1) {
-              const index = sameTagSiblings.indexOf(current) + 1;
-              identifier = `${tag}:nth-of-type(${index})`;
-            }
-          }
-        }
-      }
-      // 4. Use nth-of-type for position if no classes/attributes/styles
+      // 3. Use nth-of-type for position if no classes or semantic attributes
       else {
         const siblings = Array.from(current.parentElement?.children || []);
         const sameTagSiblings = siblings.filter(sibling => 
@@ -277,7 +242,7 @@ class SelectorGenerator {
     
     // Try to get parent classes for more specificity
     const parentClasses = Array.from(parent.classList)
-      .filter(cls => !cls.startsWith('pointa-'))
+      .filter(cls => !cls.startsWith('karen-'))
       .filter(cls => this.isStableClass(cls))
       .slice(0, 2);
     
@@ -310,9 +275,9 @@ class SelectorGenerator {
    */
   generateDataAttribute(element) {
     // Last resort: add a data attribute to the element
-    const dataId = `pointa-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    element.setAttribute('data-pointa-id', dataId);
-    return `[data-pointa-id="${dataId}"]`;
+    const dataId = `karen-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    element.setAttribute('data-karen-id', dataId);
+    return `[data-karen-id="${dataId}"]`;
   }
 
   /**
@@ -329,7 +294,7 @@ class SelectorGenerator {
       
       // Add parent context for better stability
       const parentClasses = Array.from(parent.classList)
-        .filter(cls => !cls.startsWith('pointa-'))
+        .filter(cls => !cls.startsWith('karen-'))
         .filter(cls => this.isStableClass(cls))
         .slice(0, 2);
       
@@ -345,17 +310,17 @@ class SelectorGenerator {
   }
   
   /**
-   * Generate clean selector without pointa- attributes
+   * Generate clean selector without karen- attributes
    * Used for design mode annotations
    * @param {HTMLElement} element
    * @returns {string} Selector
    */
   generateClean(element) {
-    // Generate a selector without temporary pointa- classes or data-pointa-id attributes
+    // Generate a selector without temporary karen- classes or data-karen-id attributes
     const tag = element.tagName.toLowerCase();
     
-    // Check for permanent ID (not pointa-generated)
-    if (element.id && !element.id.startsWith('pointa-')) {
+    // Check for permanent ID (not karen-generated)
+    if (element.id && !element.id.startsWith('karen-')) {
       return `#${element.id}`;
     }
     
@@ -364,7 +329,7 @@ class SelectorGenerator {
     
     // Prefer class-based selectors
     const cleanClasses = Array.from(element.classList)
-      .filter(cls => !cls.startsWith('pointa-'))
+      .filter(cls => !cls.startsWith('karen-'))
       .filter(cls => cls.trim() !== '');
     
     if (cleanClasses.length > 0) {
@@ -377,7 +342,7 @@ class SelectorGenerator {
       // If not unique, add parent context for specificity
       if (parent && parent.tagName !== 'BODY') {
         const parentClasses = Array.from(parent.classList)
-          .filter(cls => !cls.startsWith('pointa-'))
+          .filter(cls => !cls.startsWith('karen-'))
           .slice(0, 2);
         
         if (parentClasses.length > 0) {
@@ -398,7 +363,7 @@ class SelectorGenerator {
       
       const parentSelector = parent.tagName.toLowerCase();
       const parentClasses = Array.from(parent.classList)
-        .filter(cls => !cls.startsWith('pointa-'))
+        .filter(cls => !cls.startsWith('karen-'))
         .slice(0, 2);
       const parentPart = parentClasses.length > 0 
         ? `${parentSelector}.${parentClasses.join('.')}` 
@@ -415,7 +380,7 @@ class SelectorGenerator {
       if (grandparent && grandparent.tagName !== 'BODY') {
         const grandparentTag = grandparent.tagName.toLowerCase();
         const grandparentClasses = Array.from(grandparent.classList)
-          .filter(cls => !cls.startsWith('pointa-'))
+          .filter(cls => !cls.startsWith('karen-'))
           .slice(0, 1);
         const grandparentPart = grandparentClasses.length > 0 
           ? `${grandparentTag}.${grandparentClasses.join('.')}` 
@@ -429,7 +394,7 @@ class SelectorGenerator {
     }
     
     // Last resort: use a robust fallback WITHOUT adding temporary attributes
-    // CRITICAL: Do NOT call generate() here as it may add data-pointa-id
+    // CRITICAL: Do NOT call generate() here as it may add data-karen-id
     console.warn('[generateClean] Could not generate unique clean selector, using robust fallback');
     
     // Try with text content + position for better stability
@@ -445,7 +410,7 @@ class SelectorGenerator {
       const parentTag = parent.tagName.toLowerCase();
       const contextSelector = `${parentTag} > ${nthTypeSelector}`;
       
-      // Even if not unique, this is better than data-pointa-id
+      // Even if not unique, this is better than data-karen-id
       // The element finder has fallback logic to handle non-unique selectors
       return contextSelector;
     }
@@ -513,5 +478,7 @@ class SelectorGenerator {
 }
 
 // Create and export singleton instance
-window.PointaSelectorGenerator = new SelectorGenerator();
+window.KarenSelectorGenerator = new SelectorGenerator();
 
+
+})();
