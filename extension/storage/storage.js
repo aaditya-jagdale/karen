@@ -17,6 +17,14 @@ function picture(source, alt, className) {
   image.src = source;
   return image;
 }
+function imageButton(source, label, className) {
+  const button = document.createElement('button');
+  button.className = 'image-open';
+  button.setAttribute('aria-label', `Inspect image: ${label}`);
+  button.append(picture(source, label, className));
+  button.onclick = () => KarenImageViewer(document.body, source, label);
+  return button;
+}
 async function deleteEntry(id) {
   if (!confirm('Delete this captured entry?')) return;
   await message('deleteActivity', { id });
@@ -52,12 +60,6 @@ function showDetail(event) {
   comment.className = 'full-comment';
   comment.textContent = event.comment || 'No comment';
   content.append(heading, commentTitle, comment);
-  const snapshot = imageUrl(event.snapshot);
-  if (snapshot) {
-    const snapshotTitle = document.createElement('h3');
-    snapshotTitle.textContent = 'Page snapshot';
-    content.append(snapshotTitle, picture(snapshot, 'Captured page', 'detail-snapshot'));
-  }
   const components = componentsOf(event).filter(component => imageUrl(component.image));
   if (components.length) {
     const componentTitle = document.createElement('h3');
@@ -68,10 +70,19 @@ function showDetail(event) {
       const figure = document.createElement('figure');
       const caption = document.createElement('figcaption');
       caption.textContent = component.selector || component.classes?.join(' ') || component.tag || 'Component';
-      figure.append(picture(imageUrl(component.image), caption.textContent, 'component-image'), caption);
+      figure.append(imageButton(imageUrl(component.image), caption.textContent, 'component-image'), caption);
       gallery.append(figure);
     }
     content.append(componentTitle, gallery);
+  }
+  const snapshot = imageUrl(event.snapshot);
+  if (snapshot) {
+    const context = document.createElement('details');
+    context.className = 'page-context';
+    const summary = document.createElement('summary');
+    summary.textContent = 'Page snapshot · surrounding context';
+    context.append(summary, imageButton(snapshot, 'Page snapshot', 'detail-snapshot'));
+    content.append(context);
   }
   find('detail').replaceChildren(content);
   scrollTo({ top: 0, behavior: 'smooth' });
@@ -83,7 +94,7 @@ function tile(event) {
   open.className = 'tile-open';
   open.setAttribute('aria-label', `Open capture from ${formatDate(event.created_at)}`);
   open.onclick = () => showDetail(event);
-  const preview = imageUrl(event.snapshot) || componentsOf(event).map(component => imageUrl(component.image)).find(Boolean);
+  const preview = componentsOf(event).map(component => imageUrl(component.image)).find(Boolean) || imageUrl(event.snapshot);
   const visual = document.createElement('div');
   visual.className = 'tile-visual';
   visual.append(preview ? picture(preview, '', 'tile-image') : Object.assign(document.createElement('span'), { textContent: 'No image' }));

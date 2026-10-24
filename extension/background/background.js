@@ -4,7 +4,7 @@ chrome.action.onClicked.addListener(async tab => {
   try {
     await chrome.scripting.executeScript({
       target: { tabId: tab.id },
-      files: ['browser-api.js', 'content/modules/selector-generator.js', 'content/content.js']
+      files: ['browser-api.js', 'content/modules/selector-generator.js', 'image-viewer.js', 'content/content.js']
     });
   } catch (error) {
     await chrome.storage.local.set({ inspectorError: `Cannot inspect this page. Open a regular web page and try again. ${error.message}` });

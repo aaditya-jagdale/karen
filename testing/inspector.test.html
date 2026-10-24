@@ -14,18 +14,34 @@ let root;
 const original = Element.prototype.attachShadow;
 Element.prototype.attachShadow = function(options) { root = original.call(this, options); return root; };
 window.chrome = { runtime: { getURL: path => new URL('../extension/' + path, location.href).href, sendMessage: async message => { if (message.action === 'captureSnapshot') { captureHidden = root.host.style.visibility === 'hidden'; return failCapture ? { success: false, error: 'Capture unavailable' } : { success: true, data_url: screenshot, captured_at: new Date().toISOString() }; } events.push(message.event); return { success: true, folder: 'karen' }; } } };
-</script><script src="../extension/content/modules/selector-generator.js"></script><script src="../extension/content/modules/context-analyzer.js"></script><script src="../extension/content/content.js"></script><script>
+</script><script src="../extension/content/modules/selector-generator.js"></script><script src="../extension/content/modules/context-analyzer.js"></script><script src="../extension/image-viewer.js"></script><script src="../extension/content/content.js"></script><script>
 (async () => {
 try {
  const check = (condition, label) => { if (!condition) throw new Error(label); };
  const waitFor = async predicate => { for (let i = 0; i < 50 && !predicate(); i++) await new Promise(resolve => setTimeout(resolve, 10)); };
  const target = document.getElementById('target');
+ check(root.querySelector('nav'), 'floating toolbar exists');
  target.click();
  await waitFor(() => root.querySelectorAll('#attachments li').length === 1);
  check(events.length === 0, 'selection is not persisted before Send');
  check(root.querySelector('#attachments img').src.startsWith('data:image/png;'), 'component image');
+ check(!root.getElementById('composer').hidden, 'selection opens composer');
+ check(root.getElementById('count').textContent === '1', 'draft count');
+ root.getElementById('dismiss').click();
+ check(root.getElementById('composer').hidden, 'minimize composer');
+ root.getElementById('draft').click();
+ check(!root.getElementById('composer').hidden, 'reopen composer');
+ const move = root.getElementById('move');
+ move.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+ check(parseFloat(root.querySelector('nav').style.left) >= 8, 'keyboard toolbar positioning');
  const comment = root.getElementById('comment');
  check(!comment.disabled, 'comment enabled');
+ root.querySelector('.attachment-preview').click();
+ check(root.querySelector('dialog').open, 'draft image viewer opens');
+ document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+ check(!root.getElementById('composer').hidden, 'viewer Escape does not minimize composer');
+ root.querySelector('dialog [data-action="close"]').click();
+
  comment.value = 'Make this blue'; comment.dispatchEvent(new Event('input'));
  comment.value = ''; comment.dispatchEvent(new Event('input'));
  await new Promise(resolve => setTimeout(resolve, 30));
@@ -40,7 +56,7 @@ try {
  check(comment.value === 'Keep this draft', 'adding a component preserves the comment');
  check(root.querySelectorAll('#attachments li').length === 2, 'multiple components');
  check([...root.querySelectorAll('#attachments img')].every(image => image.src.startsWith('data:image/png;')), 'component image previews');
- root.querySelector('#attachments button').click();
+ root.querySelector('#attachments button[aria-label^="Remove"]').click();
  check(root.querySelectorAll('#attachments li').length === 1, 'remove component');
  check(!root.getElementById('files'), 'no file upload');
  failCapture = true;

@@ -1,29 +1,58 @@
-:host { all: initial; font-family: Inter, system-ui, sans-serif; color-scheme: light; }
+@font-face { font-family: Inter; src: url('../assets/fonts/InterVariable.woff2') format('woff2'); font-weight: 100 900; font-display: swap; }
+:host { all: initial; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color-scheme: light dark; --surface: #fff; --text: #0c111b; --muted: #697586; --line: #00000014; --hover: #0000000f; --field: #f8f9fc; --shadow: 0 4px 16px #0000001a, 0 1px 4px #0000000f; }
 * { box-sizing: border-box; }
-section { pointer-events: auto; position: fixed; right: 20px; top: 20px; width: min(340px, calc(100vw - 40px)); max-height: calc(100vh - 40px); overflow: auto; padding: 18px; border: 1px solid #d8e2eb; border-radius: 12px; background: #fff; color: #172d40; box-shadow: 0 12px 40px #183c6326; font-size: 14px; }
-header { display: flex; justify-content: space-between; align-items: center; }
-strong { font-size: 20px; }
-small { margin-left: 8px; color: #52667a; font: 10px ui-monospace, monospace; letter-spacing: .1em; }
+nav, section { font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
 button, textarea { font: inherit; }
-button { cursor: pointer; background: #f2f7fb; color: #164b75; padding: 9px 12px; border: 1px solid #ccdce9; border-radius: 6px; }
-button:hover { background: #e5f2fc; }
-button:focus-visible, textarea:focus-visible { outline: 2px solid #0c8ce9; outline-offset: 2px; }
-#close { font-size: 22px; padding: 0 8px; border: 0; background: transparent; }
-#selected { font: 12px/1.5 ui-monospace, monospace; overflow-wrap: anywhere; max-height: 80px; overflow: auto; }
-#inspect { width: 100%; }
-#inspect[aria-pressed=true] { background: #0c73bd; color: white; }
-label { display: block; margin: 20px 0 8px; font-weight: 600; }
-label span { float: right; color: #52667a; font-size: 11px; font-weight: 400; }
-textarea { width: 100%; resize: vertical; padding: 10px; border: 1px solid #ccdce9; border-radius: 6px; color: #172d40; background: white; }
-#status { font-size: 12px; line-height: 1.5; color: #52667a; overflow-wrap: anywhere; }
-#storage { background: transparent; }
-#outline { pointer-events: none; position: fixed; border: 2px solid #0c8ce9; background: #0c8ce914; }
+button { cursor: pointer; }
+button:focus-visible, textarea:focus-visible { outline: 2px solid #0c8ce9; outline-offset: 3px; }
+button:disabled { opacity: .45; cursor: default; }
+svg { flex-shrink: 0; pointer-events: none; }
+nav { pointer-events: auto; position: fixed; right: 10px; top: max(16px, calc(50% - 150px)); display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 6px; border-radius: 28px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); user-select: none; }
+.tool { display: flex; align-items: center; justify-content: center; position: relative; width: 36px; height: 36px; padding: 0; margin: 0; border: 0; border-radius: 50%; background: transparent; color: var(--muted); transition: background .15s, color .15s; }
+.tool:hover { background: var(--hover); color: var(--text); }
+.tool[aria-pressed=true], .tool[aria-expanded=true] { background: #0c8ce9; color: #fff; }
+.tool[aria-pressed=true]:hover, .tool[aria-expanded=true]:hover { background: #0a7ad4; }
+.tool::after { content: attr(data-tooltip); position: absolute; right: calc(100% + 14px); padding: 6px 9px; border-radius: 6px; background: var(--text); color: var(--surface); font-size: 11px; font-weight: 500; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .15s; }
+.tool:hover::after, .tool:focus-visible::after { opacity: 1; }
+#move { cursor: grab; touch-action: none; }
+#move:active { cursor: grabbing; }
+#move img { border-radius: 4px; pointer-events: none; }
+.divider { width: 20px; height: 1px; margin: 4px 0; background: var(--line); }
+#count { position: absolute; top: -2px; right: -2px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: #e87b35; color: #fff; font-size: 10px; line-height: 16px; font-weight: 600; }
+section { pointer-events: auto; position: fixed; width: min(360px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--text); box-shadow: 0 8px 32px #0000001f, 0 2px 8px #0000000f; font-size: 13px; line-height: 1.5; animation: appear .15s ease-out; }
+header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+strong { font-size: 13px; font-weight: 600; }
+#dismiss { display: grid; place-items: center; padding: 4px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); }
+#dismiss:hover { background: var(--hover); color: var(--text); }
+.panel-body { padding: 16px; }
+#selected { margin: 0 0 16px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--field); color: var(--muted); font: 11px/1.6 ui-monospace, monospace; overflow-wrap: anywhere; max-height: 64px; overflow: auto; }
+label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 12px; }
+textarea { display: block; width: 100%; min-height: 104px; resize: vertical; padding: 12px; border: 1px solid var(--line); border-radius: 8px; color: var(--text); background: var(--field); line-height: 1.6; font-size: 13px; }
+textarea::placeholder { color: var(--muted); }
+textarea:disabled { opacity: .65; }
+.attachment-heading { display: flex; justify-content: space-between; margin-top: 20px; font-size: 11px; color: var(--muted); }
+.attachment-heading span { font: 10px ui-monospace, monospace; }
+#attachments { list-style: none; padding: 0; margin: 8px 0; }
+#attachments:empty::after { content: 'No components selected yet'; display: block; padding: 12px 0; font-size: 12px; color: var(--muted); }
+#attachments li { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+#attachments span { flex: 1; overflow-wrap: anywhere; min-width: 0; font: 11px/1.5 ui-monospace, monospace; }
+#attachments img { width: 40px; height: 40px; object-fit: cover; border: 1px solid var(--line); border-radius: 6px; background: var(--field); }
+#attachments button { border: 0; background: transparent; color: var(--muted); padding: 4px 8px; border-radius: 4px; font-size: 18px; }
+#attachments button:hover { background: var(--hover); color: var(--text); }
+#add { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 8px; border: 1px solid var(--line); border-radius: 6px; color: var(--muted); background: transparent; font-size: 12px; }
+#add:hover { color: var(--text); background: var(--hover); }
+footer { border-top: 1px solid var(--line); padding: 12px 16px; }
+#send { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 9px 12px; border: 0; border-radius: 6px; background: #0c8ce9; color: #fff; font-size: 12px; font-weight: 500; }
+#send:hover:not(:disabled) { background: #0a7ad4; }
+#status { margin: 8px 0 0; font-size: 11px; line-height: 1.5; color: var(--muted); overflow-wrap: anywhere; }
+#outline { pointer-events: none; position: fixed; border: 2px solid #0c8ce9; border-radius: 4px; background: #0c8ce914; }
 [hidden] { display: none !important; }
+@keyframes appear { from { opacity: 0; transform: translateX(4px); } to { opacity: 1; transform: translateX(0); } }
+@media (prefers-color-scheme: dark) {
+  :host { --surface: #1a1d24; --text: #fcfcfd; --muted: #a0a6b0; --line: #ffffff14; --hover: #ffffff14; --field: #ffffff0d; --shadow: 0 4px 16px #0000003d, 0 1px 4px #0000001f; }
+  section { box-shadow: 0 8px 32px #00000052, 0 2px 8px #00000029; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::after { animation: none !important; transition: none !important; } }
 
-#attachments { list-style: none; padding: 0; margin: 12px 0; }
-#attachments li { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
-#attachments span { flex: 1; overflow-wrap: anywhere; min-width: 0; font-size: 12px; }
-#attachments img { width: 42px; height: 42px; object-fit: cover; border-radius: 4px; }
-#attachments button { padding: 3px 8px; }
-#send { width: 100%; background: #0c73bd; color: white; }
-button:disabled { opacity: .5; cursor: default; }
+#attachments .attachment-preview { flex-shrink: 0; padding: 0; cursor: zoom-in; }
+#attachments .attachment-preview img { display: block; }

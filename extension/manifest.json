@@ -35,7 +35,9 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "content/content.css"
+        "content/content.css",
+        "assets/fonts/InterVariable.woff2",
+        "assets/icons/karen-icon32.png"
       ],
       "matches": [
         "<all_urls>"

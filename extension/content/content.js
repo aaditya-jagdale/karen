@@ -12,20 +12,34 @@
   shadow.append(css);
   const panel = document.createElement('section');
   panel.setAttribute('aria-label', 'Karen inspector');
+  const icon = path => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${path}</svg>`;
+  const toolbar = document.createElement('nav');
+  toolbar.setAttribute('aria-label', 'Karen tools');
+  toolbar.innerHTML = `
+    <button id="move" class="tool" aria-label="Move toolbar with arrow keys" data-tooltip="Drag to move · arrow keys">
+      <img src="${chrome.runtime.getURL('assets/icons/karen-icon32.png')}" width="22" height="22" alt="Karen" draggable="false">
+    </button>
+    <button id="inspect" class="tool" aria-label="Inspect a component" aria-pressed="true" data-tooltip="Inspect a component">${icon('<path d="M4 3l7 18 3-7 7-3L4 3z"/>')}</button>
+    <button id="draft" class="tool" aria-label="Comment draft" aria-expanded="false" aria-controls="composer" data-tooltip="Comment draft">${icon('<path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-4-.9L3 21l1.9-5.5a9 9 0 0 1-.9-4A8.5 8.5 0 0 1 12.5 3h.5a8.5 8.5 0 0 1 8 8v.5z"/>')}<span id="count" hidden></span></button>
+    <button id="storage" class="tool" aria-label="Local activity" data-tooltip="Local activity">${icon('<path d="M4 6h16M4 12h16M4 18h16"/>')}</button>
+    <span class="divider"></span>
+    <button id="close" class="tool" aria-label="Close inspector" data-tooltip="Close inspector">${icon('<path d="M6 6l12 12M6 18L18 6"/>')}</button>`;
+  panel.id = 'composer';
+  panel.hidden = true;
   panel.innerHTML = `
-    <header><strong>Karen <small>INSPECTOR</small></strong><button id="close" aria-label="Close inspector">×</button></header>
-    <p id="selected">Click a component on the page.</p>
-    <button id="inspect" aria-pressed="true">Inspecting…</button>
-    <label for="comment">Comment <span>saved when sent</span></label>
-    <textarea id="comment" rows="4" placeholder="Select a component to add a comment" disabled></textarea>
-    <label>Captured components</label>
-    <ul id="attachments" aria-label="Captured components"></ul>
-    <button id="send" disabled>Send · include snapshot</button>
-    <p id="status" role="status">Nothing is saved until you press Send.</p>
-    <button id="storage">Local activity ↗</button>`;
+    <header><strong>Comment</strong><button id="dismiss" aria-label="Minimize comment">${icon('<path d="M6 6l12 12M6 18L18 6"/>')}</button></header>
+    <div class="panel-body">
+      <p id="selected">Inspect a component to get started.</p>
+      <label for="comment">What should change?</label>
+      <textarea id="comment" rows="4" placeholder="Select a component to add a comment" disabled></textarea>
+      <div class="attachment-heading">Captured components <span>PNG</span></div>
+      <ul id="attachments" aria-label="Captured components"></ul>
+      <button id="add">${icon('<path d="M12 5v14M5 12h14"/>')} Inspect another component</button>
+    </div>
+    <footer><button id="send" disabled>Send comment ${icon('<path d="M5 12h14M13 6l6 6-6 6"/>')}</button><p id="status" role="status">Includes a page snapshot. Saved locally when sent.</p></footer>`;
   const outline = document.createElement('div');
   outline.id = 'outline';
-  shadow.append(outline, panel);
+  shadow.append(outline, toolbar, panel);
   const find = id => shadow.getElementById(id);
   let active = false;
   let inspecting = true;
@@ -40,7 +54,12 @@
       const image = document.createElement('img');
       image.src = attachment.image.data_url;
       image.alt = `Captured ${attachment.name}`;
-      row.append(image);
+      const preview = document.createElement('button');
+      preview.className = 'attachment-preview';
+      preview.setAttribute('aria-label', `Inspect image of ${attachment.name}`);
+      preview.append(image);
+      preview.onclick = () => KarenImageViewer(shadow, attachment.image.data_url, attachment.name);
+      row.append(preview);
       const label = document.createElement('span');
       label.textContent = attachment.name;
       const remove = document.createElement('button');
@@ -54,14 +73,60 @@
       row.append(label, remove);
       return row;
     }));
+    find('count').textContent = attachments.length;
+    find('count').hidden = !attachments.length;
     find('send').disabled = capturing || sending || !attachments.length;
   }
   function setInspecting(value) {
     inspecting = value;
-    find('inspect').textContent = value ? 'Inspecting…' : 'Inspect another component';
+    find('inspect').setAttribute('aria-label', value ? 'Pause inspection' : 'Inspect a component');
+    find('inspect').dataset.tooltip = value ? 'Pause inspection' : 'Inspect a component';
     find('inspect').setAttribute('aria-pressed', String(value));
     outline.hidden = true;
   }
+  function showComposer(show) {
+    panel.hidden = !show;
+    find('draft').setAttribute('aria-expanded', String(show));
+    placePanel();
+  }
+  function placePanel() {
+    const box = toolbar.getBoundingClientRect();
+    const width = Math.min(360, innerWidth - 32);
+    const left = box.left >= width + 24 ? box.left - width - 8 : box.right + 8;
+    panel.style.left = `${Math.max(16, Math.min(innerWidth - width - 16, left))}px`;
+    panel.style.top = `${Math.max(16, Math.min(box.top, innerHeight - panel.offsetHeight - 16))}px`;
+  }
+  function moveToolbar(x, y) {
+    toolbar.style.left = `${Math.max(8, Math.min(x, innerWidth - toolbar.offsetWidth - 8))}px`;
+    toolbar.style.top = `${Math.max(8, Math.min(y, innerHeight - toolbar.offsetHeight - 8))}px`;
+    toolbar.style.right = 'auto';
+    placePanel();
+  }
+  let drag;
+  find('move').onpointerdown = event => {
+    if (event.button !== 0) return;
+    const box = toolbar.getBoundingClientRect();
+    drag = { x: event.clientX - box.left, y: event.clientY - box.top };
+    find('move').setPointerCapture(event.pointerId);
+  };
+  find('move').onpointermove = event => {
+    if (drag) moveToolbar(event.clientX - drag.x, event.clientY - drag.y);
+  };
+  find('move').onlostpointercapture = () => { drag = null; };
+  find('move').onpointerup = event => { find('move').releasePointerCapture(event.pointerId); };
+  find('move').onkeydown = event => {
+    const directions = { ArrowLeft: [-16, 0], ArrowRight: [16, 0], ArrowUp: [0, -16], ArrowDown: [0, 16] };
+    if (!directions[event.key]) return;
+    event.preventDefault();
+    const box = toolbar.getBoundingClientRect();
+    moveToolbar(box.left + directions[event.key][0], box.top + directions[event.key][1]);
+  };
+  window.addEventListener('resize', () => {
+    if (!active) return;
+    const box = toolbar.getBoundingClientRect();
+    moveToolbar(box.left, box.top);
+  });
+  new ResizeObserver(placePanel).observe(panel);
   function toggle() {
     if (sending) return;
     if (active) {
@@ -69,6 +134,7 @@
     } else {
       document.documentElement.append(host);
       setInspecting(true);
+      placePanel();
     }
     active = !active;
   }
@@ -154,6 +220,7 @@
     event.stopImmediatePropagation();
     capturing = true;
     setInspecting(false);
+    showComposer(true);
     find('status').textContent = 'Capturing component…';
     renderAttachments();
     try {
@@ -173,6 +240,7 @@
       submission = null;
       renderAttachments();
       find('comment').placeholder = 'What should change?';
+      find('status').textContent = 'Includes a page snapshot. Saved locally when sent.';
       find('comment').focus();
     } catch (error) {
       find('status').textContent = `Could not capture this element: ${error.message}`;
@@ -183,11 +251,15 @@
     }
   }, true);
   document.addEventListener('keydown', event => {
-    if (!active || event.key !== 'Escape') return;
+    if (!active || sending || shadow.querySelector('dialog[open]') || event.key !== 'Escape') return;
     if (inspecting) setInspecting(false);
+    else if (!panel.hidden) { showComposer(false); find('draft').focus(); }
     else toggle();
   }, true);
-  find('inspect').onclick = () => setInspecting(!inspecting);
+  find('inspect').onclick = () => { setInspecting(!inspecting); if (inspecting) showComposer(false); };
+  find('add').onclick = () => { setInspecting(true); showComposer(false); };
+  find('draft').onclick = () => { setInspecting(false); showComposer(panel.hidden); if (!panel.hidden) find('comment').focus(); };
+  find('dismiss').onclick = () => { showComposer(false); find('draft').focus(); };
   find('close').onclick = toggle;
   find('storage').onclick = () => chrome.runtime.sendMessage({ action: 'openStorage' });
   find('comment').oninput = () => {
@@ -197,6 +269,7 @@
     if (sending || capturing || !attachments.length) return;
     sending = true;
     panel.inert = true;
+    toolbar.inert = true;
     find('send').textContent = 'Saving…';
     renderAttachments();
     try {
@@ -227,8 +300,9 @@
     } finally {
       sending = false;
       panel.inert = false;
+      toolbar.inert = false;
       host.style.removeProperty('visibility');
-      find('send').textContent = 'Send · include snapshot';
+      find('send').textContent = 'Send comment';
       renderAttachments();
     }
   };
