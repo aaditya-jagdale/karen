@@ -5,15 +5,13 @@ import { execFileSync } from 'node:child_process';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const output = join(root, 'dist/firefox');
-const archive = join(root, 'dist/pointa-firefox.zip');
+const archive = join(root, 'dist/karen-firefox.zip');
 const manifest = JSON.parse(await readFile(join(root, 'extension/manifest.json'), 'utf8'));
 
-manifest.background = { scripts: ['browser-api.js', 'background/background.js'] };
-manifest.permissions = manifest.permissions.filter(permission => permission !== 'debugger');
-manifest.host_permissions = manifest.host_permissions.map(pattern => pattern.replace(/^http:/, '*:'));
+manifest.background = { scripts: ['browser-api.js', 'background/file-storage.js', 'background/background.js'] };
 manifest.browser_specific_settings = {
   gecko: {
-    id: 'pointa@pointa.dev',
+    id: 'karen@karen.dev',
     strict_min_version: '140.0',
     data_collection_permissions: {
       required: ['browsingActivity', 'websiteContent', 'websiteActivity']

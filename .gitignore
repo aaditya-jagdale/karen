@@ -6,10 +6,7 @@ npm-debug.log*
 dist/
 extension/dist/
 extension/*.zip
-pointa-extension.zip
-
-# MCP Server
-mcp-server/logs/
+karen-extension.zip
 
 # Development
 .env
@@ -38,3 +35,6 @@ docs/prd_document.md
 
 # ToDos
 TODO.md
+
+# Local inspection activity
+karen-activity.json

@@ -1,0 +1,74 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Karen inspector smoke check</title><body><button id="target" class="primary action" data-source="components/Button.tsx:12">Example component</button><pre id="result">WAITING</pre><script>
+const events = [];
+let failCapture = false;
+let captureHidden = false;
+const screenshotCanvas = document.createElement('canvas');
+screenshotCanvas.width = innerWidth;
+screenshotCanvas.height = innerHeight;
+screenshotCanvas.getContext('2d').fillStyle = '#0c73bd';
+screenshotCanvas.getContext('2d').fillRect(0, 0, screenshotCanvas.width, screenshotCanvas.height);
+const screenshot = screenshotCanvas.toDataURL('image/png');
+// The capture transport is mocked; advance paint waits in headless virtual time.
+window.requestAnimationFrame = callback => setTimeout(callback, 16);
+let root;
+const original = Element.prototype.attachShadow;
+Element.prototype.attachShadow = function(options) { root = original.call(this, options); return root; };
+window.chrome = { runtime: { getURL: path => new URL('../extension/' + path, location.href).href, sendMessage: async message => { if (message.action === 'captureSnapshot') { captureHidden = root.host.style.visibility === 'hidden'; return failCapture ? { success: false, error: 'Capture unavailable' } : { success: true, data_url: screenshot, captured_at: new Date().toISOString() }; } events.push(message.event); return { success: true, folder: 'karen' }; } } };
+</script><script src="../extension/content/modules/selector-generator.js"></script><script src="../extension/content/modules/context-analyzer.js"></script><script src="../extension/content/content.js"></script><script>
+(async () => {
+try {
+ const check = (condition, label) => { if (!condition) throw new Error(label); };
+ const waitFor = async predicate => { for (let i = 0; i < 50 && !predicate(); i++) await new Promise(resolve => setTimeout(resolve, 10)); };
+ const target = document.getElementById('target');
+ target.click();
+ await waitFor(() => root.querySelectorAll('#attachments li').length === 1);
+ check(events.length === 0, 'selection is not persisted before Send');
+ check(root.querySelector('#attachments img').src.startsWith('data:image/png;'), 'component image');
+ const comment = root.getElementById('comment');
+ check(!comment.disabled, 'comment enabled');
+ comment.value = 'Make this blue'; comment.dispatchEvent(new Event('input'));
+ comment.value = ''; comment.dispatchEvent(new Event('input'));
+ await new Promise(resolve => setTimeout(resolve, 30));
+ check(events.length === 0, 'comment edits are not persisted before Send');
+ target.dispatchEvent(new PointerEvent('pointermove', { bubbles: true }));
+ root.getElementById('inspect').click();
+ target.dispatchEvent(new PointerEvent('pointermove', { bubbles: true }));
+ check(Math.abs(parseFloat(root.getElementById('outline').style.width) - target.getBoundingClientRect().width - 8) < 0.01, 'indicator padding');
+ comment.value = 'Keep this draft';
+ target.click();
+ await waitFor(() => root.querySelectorAll('#attachments li').length === 2);
+ check(comment.value === 'Keep this draft', 'adding a component preserves the comment');
+ check(root.querySelectorAll('#attachments li').length === 2, 'multiple components');
+ check([...root.querySelectorAll('#attachments img')].every(image => image.src.startsWith('data:image/png;')), 'component image previews');
+ root.querySelector('#attachments button').click();
+ check(root.querySelectorAll('#attachments li').length === 1, 'remove component');
+ check(!root.getElementById('files'), 'no file upload');
+ failCapture = true;
+ await root.getElementById('send').onclick();
+ check(comment.value === 'Keep this draft' && root.querySelectorAll('#attachments li').length === 1, 'capture failure preserves draft');
+ check(root.host.style.visibility !== 'hidden', 'capture failure restores inspector');
+ failCapture = false;
+ await root.getElementById('send').onclick();
+ const sent = events.find(e => e.type === 'annotation_sent');
+ check(sent && sent.comment === 'Keep this draft', 'explicit send');
+ check(sent.components.length === 1, 'only remaining component sent');
+ check(sent.components[0].classes.join(' ') === 'primary action', 'classes sent');
+ check(!('styles' in sent.components[0]) && !('attributes' in sent.components[0]) && !('text' in sent.components[0]), 'CSS and DOM content omitted');
+ check(sent.components[0].image.data_url.startsWith('data:image/png;'), 'component image sent');
+ check(sent.device.viewport.width === innerWidth && sent.device.screen.width === screen.width, 'device dimensions sent');
+ check(typeof sent.device.user_agent === 'string' && sent.device.timezone, 'browser and locale metadata sent');
+ check(sent.snapshot.data_url.startsWith('data:image/png;') && captureHidden, 'snapshot without inspector');
+ check(comment.value === '' && root.querySelectorAll('#attachments li').length === 0, 'successful send clears draft');
+ root.getElementById('close').click();
+ globalThis.karenInspector.toggle();
+ await new Promise(resolve => setTimeout(resolve, 30));
+ check(events.length === 1, 'reopening is not persisted');
+ root.getElementById('inspect').click();
+ const count = events.length;
+ target.click();
+ await new Promise(resolve => setTimeout(resolve, 30));
+ check(events.length === count, 'paused inspector leaves page clicks alone');
+ document.getElementById('result').textContent = 'PASS: selection, cropped component images, no file upload, removal, send, full snapshot, failed capture recovery, reopening';
+} catch (error) { document.getElementById('result').textContent = 'FAIL: '+error.stack; }
+})();
+</script></body></html>

@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Karen — Local activity</title><link rel="stylesheet" href="storage.css"></head>
+<body><main>
+  <header class="page-header">
+    <div><p class="eyebrow">KAREN / LOCAL ACTIVITY</p><h1>Visual review inbox</h1><p>Every tile is one message you sent, with its captured UI and comment.</p></div>
+    <div class="actions"><button id="choose">Choose project folder</button><button id="reconnect" hidden>Reconnect folder</button><button id="copy">Copy JSON</button><button id="export">Export JSON</button><button id="clear" class="danger">Clear all</button></div>
+  </header>
+  <p id="status" role="status">Loading…</p><p id="error" role="alert"></p>
+  <section id="list-view" aria-labelledby="count"><h2 id="count">Activity</h2><div id="activity" class="activity-grid"></div></section>
+  <section id="detail-view" hidden><button id="back" class="back">← All activity</button><div id="detail"></div></section>
+</main><script src="../browser-api.js"></script><script src="../background/file-storage.js"></script><script src="storage.js"></script></body>
+</html>
