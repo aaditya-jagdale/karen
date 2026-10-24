@@ -275,10 +275,12 @@ const BugRecorder = {
       const response = await chrome.runtime.sendMessage({ action: 'startCDPRecording' });
       if (!response.success) {
         console.warn('[BugRecorder] CDP recording failed to start:', response.error);
+        this.recordingData.metadata.captureWarnings = [response.error];
         // Continue anyway - we'll still capture interactions and error events
       }
     } catch (error) {
       console.warn('[BugRecorder] Could not start CDP recording:', error.message);
+      this.recordingData.metadata.captureWarnings = [error.message];
     }
 
     // Start backend log recording if enabled

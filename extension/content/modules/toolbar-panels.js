@@ -519,8 +519,9 @@ const ToolbarPanels = {
           <div class="toolbar-panel-body">
             <p class="toolbar-panel-desc">Record your bug in action:</p>
             <ul class="toolbar-panel-feature-list">
-              <li>🎬 Console errors & warnings</li>
-              <li>🌐 Network requests & failures</li>
+              ${chrome.runtime.getURL('').startsWith('moz-extension://')
+                ? '<li>Page errors (console messages and network requests are not captured in Firefox)</li>'
+                : '<li>🎬 Console errors & warnings</li><li>🌐 Network requests & failures</li>'}
               <li>🖱️ Clicks & interactions</li>
               <li>📸 Page screenshot</li>
             </ul>

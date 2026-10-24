@@ -168,6 +168,7 @@ const BugReplayEngine = {
       replayed: true,
       metadata: {
         startTime: newRecording.metadata.startTime,
+        captureWarnings: newRecording.metadata.captureWarnings,
         endTime: newRecording.endTime,
         duration: newRecording.duration
       }

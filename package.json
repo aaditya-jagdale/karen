@@ -5,6 +5,8 @@
   "private": true,
   "description": "Pointa - AI-powered development annotations",
   "scripts": {
+    "build:firefox": "node scripts/build-firefox.js",
+    "test:firefox": "node --test testing/firefox.test.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },

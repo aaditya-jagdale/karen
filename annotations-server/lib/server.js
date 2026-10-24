@@ -96,8 +96,8 @@ class LocalAnnotationsServer {
         // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
 
-        // Allow Chrome extension origins
-        if (origin.startsWith('chrome-extension://')) {
+        // Allow Chrome and Firefox extension origins
+        if (origin.startsWith('chrome-extension://') || origin.startsWith('moz-extension://')) {
           return callback(null, true);
         }
 

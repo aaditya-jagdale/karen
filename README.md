@@ -96,6 +96,8 @@ You can also use Pointa to...
 
 Install from the [Chrome Web Store](https://chromewebstore.google.com/detail/pointa/chfdkemckcihigkepbnpegcopkncoane) (recommended), or [load unpacked](docs/DEVELOPMENT.md) for development.
 
+For Firefox 140+, see the [Firefox build and installation guide](docs/FIREFOX.md).
+
 ### 2. Connect your AI coding agent
 
 Add the MCP server to your AI agent's configuration:
@@ -325,7 +327,7 @@ If you use the `npx` approach from Quick Start, the server is managed automatica
 **Known limitations**
 - Elements inside Shadow DOM (Web Components) cannot be annotated
 - Designed for localhost/local domains only
-- Currently supports Chromium-based browsers only (Chrome, Edge, Brave)
+- Chrome, Edge, and Brave are supported; the [Firefox build](docs/FIREFOX.md) has recording and viewport-emulation limitations.
 
 <details>
 <summary><b>Uninstalling</b></summary>

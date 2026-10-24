@@ -427,7 +427,7 @@ class PointaBackground {
     chrome.action.onClicked.addListener(async (tab) => {
       try {
         // Skip chrome:// and chrome-extension:// pages
-        if (!tab.url || tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://')) {
+        if (!tab.url || !/^(https?|file):/.test(tab.url)) {
           return;
         }
 
@@ -498,6 +498,7 @@ class PointaBackground {
 
       // Inject all JavaScript modules in order
       const scriptFiles = [
+      'browser-api.js',
       'content/modules/utils.js',
       'content/modules/theme-manager.js',
       'content/modules/selector-generator.js',
@@ -1139,7 +1140,11 @@ class PointaBackground {
       }
 
       // Normal capture for non-overridden viewports
-      const dataUrl = await chrome.tabs.captureVisibleTab(null, {
+      const tab = await chrome.tabs.get(tabId);
+      if (!tab.active) {
+        throw new Error('Switch back to the recorded tab before taking a screenshot.');
+      }
+      const dataUrl = await chrome.tabs.captureVisibleTab(tab.windowId, {
         format: 'png',
         quality: 90
       });
@@ -1711,6 +1716,9 @@ class PointaBackground {
    * Set viewport size for responsive capture (Feature 5)
    */
   async setViewport(tabId, width, height) {
+    if (!chrome.debugger) {
+      throw new Error('Automatic viewport resizing is unavailable in Firefox. Resize the browser window manually.');
+    }
     try {
       // Only attach debugger if not already attached
       const isAttached = this.viewportOverrides.has(tabId);
@@ -1750,6 +1758,7 @@ class PointaBackground {
    * Reset viewport to normal (Feature 5)
    */
   async resetViewport(tabId) {
+    if (!chrome.debugger) return;
     try {
       // Clear device metrics override
       await chrome.debugger.sendCommand(
@@ -1874,6 +1883,7 @@ class PointaBackground {
    * This listener handles ALL CDP events and routes them to active recordings
    */
   setupCDPEventListener() {
+    if (!chrome.debugger) return;
     chrome.debugger.onEvent.addListener((source, method, params) => {
       const tabId = source.tabId;
       const recording = this.cdpRecordings.get(tabId);
@@ -2077,6 +2087,9 @@ class PointaBackground {
    * Attaches debugger and enables Network, Log, and Runtime domains
    */
   async startCDPRecording(tabId) {
+    if (!chrome.debugger) {
+      throw new Error('Firefox recordings include interactions, page errors, screenshots and optional backend logs. Console messages and network requests are not captured.');
+    }
     try {
       // Check if already recording
       if (this.cdpRecordings.has(tabId)) {

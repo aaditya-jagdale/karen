@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Skip chrome:// and chrome-extension:// pages
-    if (!tab.url || tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://')) {
+    if (!tab.url || !/^(https?|file):/.test(tab.url)) {
       window.close();
       return;
     }
@@ -55,23 +55,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (!result.onboardingCompleted && isSupportedUrl) {
       // First time on localhost - show onboarding
-      chrome.tabs.sendMessage(tab.id, { action: 'showOnboarding' }, (response) => {
-        if (chrome.runtime.lastError) {
-          console.error('Error showing onboarding:', chrome.runtime.lastError);
-        }
-        // Close popup immediately after sending message
-        window.close();
-      });
+      await chrome.tabs.sendMessage(tab.id, { action: 'showOnboarding' });
     } else {
       // Not first time - toggle sidebar as usual (works for both localhost and external sites)
-      chrome.tabs.sendMessage(tab.id, { action: 'toggleSidebar' }, (response) => {
-        if (chrome.runtime.lastError) {
-          console.error('Error toggling sidebar:', chrome.runtime.lastError);
-        }
-        // Close popup immediately after sending message
-        window.close();
-      });
+      await chrome.tabs.sendMessage(tab.id, { action: 'toggleSidebar' });
     }
+    window.close();
 
   } catch (error) {
     console.error('Error in popup:', error);

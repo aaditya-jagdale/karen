@@ -3,6 +3,7 @@ node_modules/
 npm-debug.log*
 
 # Extension build artifacts
+dist/
 extension/dist/
 extension/*.zip
 pointa-extension.zip

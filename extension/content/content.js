@@ -2306,6 +2306,7 @@ class Pointa {
           replayed: false,
           metadata: {
             startTime: recordingData.metadata.startTime,
+            captureWarnings: recordingData.metadata.captureWarnings,
             endTime: recordingData.endTime,
             duration: recordingData.duration
           }
